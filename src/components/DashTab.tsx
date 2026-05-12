@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -15,6 +15,8 @@ import { Movimiento, Uniques } from '../types';
 import { X } from 'lucide-react';
 import Select from 'react-select';
 import { fmtNum } from '../lib/utils';
+import {usePersistentState} from '../hooks/usePersistentState';
+
 
 ChartJS.register(
   CategoryScale,
@@ -45,16 +47,51 @@ function MultiSelect({ options, selected, onChange, placeholder }: any) {
   );
 }
 
-export function DashTab({ movs, uniques }: { movs: Movimiento[], uniques: Uniques }) {
+export function DashTab({ movs,
+  uniques,
+  setFilteredMovs}: {  movs: Movimiento[],
+  uniques: Uniques,
+  setFilteredMovs: React.Dispatch<React.SetStateAction<Movimiento[]>> }) {
   // Filters State
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
-  const [tipos, setTipos] = useState<string[]>([]);
-  const [motivos, setMotivos] = useState<string[]>([]);
-  const [almacenes, setAlmacenes] = useState<string[]>([]);
-  const [marcas, setMarcas] = useState<string[]>([]);
-  const [proveedores, setProveedores] = useState<string[]>([]);
-  const [search, setSearch] = useState('');
+  const [dateFrom, setDateFrom] = usePersistentState<string>(
+  'dash-date-from',
+  ''
+);
+
+const [dateTo, setDateTo] = usePersistentState<string>(
+  'dash-date-to',
+  ''
+);
+
+const [tipos, setTipos] = usePersistentState<string[]>(
+  'dash-tipos',
+  []
+);
+
+const [motivos, setMotivos] = usePersistentState<string[]>(
+  'dash-motivos',
+  []
+);
+
+const [almacenes, setAlmacenes] = usePersistentState<string[]>(
+  'dash-almacenes',
+  []
+);
+
+const [marcas, setMarcas] = usePersistentState<string[]>(
+  'dash-marcas',
+  []
+);
+
+const [proveedores, setProveedores] = usePersistentState<string[]>(
+  'dash-proveedores',
+  []
+);
+
+const [search, setSearch] = usePersistentState<string>(
+  'dash-search',
+  ''
+);
 
   const clearFilters = () => {
     setDateFrom(''); setDateTo(''); setTipos([]); setMotivos([]);
@@ -83,6 +120,9 @@ export function DashTab({ movs, uniques }: { movs: Movimiento[], uniques: Unique
     }
     return res;
   }, [movs, dateFrom, dateTo, tipos, motivos, almacenes, marcas, proveedores, search]);
+  useEffect(() => {
+  setFilteredMovs(filteredMovs);
+}, [filteredMovs]);
 
   const { monthlyData, tiposData, topProdData } = useMemo(() => {
     // 1. Monthly

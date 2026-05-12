@@ -1,19 +1,59 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Download, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Movimiento, Uniques } from '../types';
 import { fromISODate, toISODate, fmtDateTime, fmtDate, fmtNum, cn } from '../lib/utils';
 import { Badge, MultiSelect } from './ui';
+import {usePersistentState} from '../hooks/usePersistentState';
 
-export function MovsTab({ movs, uniques }: { movs: Movimiento[], uniques: Uniques }) {
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
-  const [search, setSearch] = useState('');
-  const [tipos, setTipos] = useState<string[]>([]);
-  const [motivos, setMotivos] = useState<string[]>([]);
-  const [almacenes, setAlmacenes] = useState<string[]>([]);
-  const [marcas, setMarcas] = useState<string[]>([]);
-  const [proveedores, setProveedores] = useState<string[]>([]);
+export function MovsTab({ movs,
+  uniques,
+  setFilteredMovs}: {  movs: Movimiento[],
+  uniques: Uniques,
+  setFilteredMovs: React.Dispatch<React.SetStateAction<Movimiento[]>> }) {
+
+
+
+  //filtross!!
+  const [dateFrom, setDateFrom] = usePersistentState<string>(
+  'movs-date-from',
+  ''
+);
+
+const [dateTo, setDateTo] = usePersistentState<string>(
+  'movs-date-to',
+  ''
+);
+
+const [search, setSearch] = usePersistentState<string>(
+  'movs-search',
+  ''
+);
+
+const [tipos, setTipos] = usePersistentState<string[]>(
+  'movs-tipos',
+  []
+);
+
+const [motivos, setMotivos] = usePersistentState<string[]>(
+  'movs-motivos',
+  []
+);
+
+const [almacenes, setAlmacenes] = usePersistentState<string[]>(
+  'movs-almacenes',
+  []
+);
+
+const [marcas, setMarcas] = usePersistentState<string[]>(
+  'movs-marcas',
+  []
+);
+
+const [proveedores, setProveedores] = usePersistentState<string[]>(
+  'movs-proveedores',
+  []
+);
 
   const [sortCol, setSortCol] = useState<keyof Movimiento>('fechaHora');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
@@ -59,6 +99,9 @@ export function MovsTab({ movs, uniques }: { movs: Movimiento[], uniques: Unique
 
     return res;
   }, [movs, dateFrom, dateTo, tipos, motivos, almacenes, marcas, proveedores, search, sortCol, sortDir]);
+  useEffect(() => {
+  setFilteredMovs(filtered);
+}, [filtered]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, totalPages);

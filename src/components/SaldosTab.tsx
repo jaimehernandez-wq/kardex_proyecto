@@ -1,16 +1,53 @@
-import React, { useState, useMemo } from 'react';
-import { Download } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Download, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Movimiento, Uniques } from '../types';
 import { fromISODate, toISODate, fmtDate, fmtNum, cn } from '../lib/utils';
 import { MultiSelect } from './ui';
+import {usePersistentState} from '../hooks/usePersistentState';
 
-export function SaldosTab({ movs, uniques }: { movs: Movimiento[], uniques: Uniques }) {
-  const [fecha, setFecha] = useState(toISODate(new Date()));
-  const [almacenes, setAlmacenes] = useState<string[]>([]);
-  const [marcas, setMarcas] = useState<string[]>([]);
-  const [search, setSearch] = useState('');
-  const [show, setShow] = useState('nonzero');
+
+
+
+export function SaldosTab({ movs,
+  uniques,
+  setFilteredMovs}: {  movs: Movimiento[],
+  uniques: Uniques,
+  setFilteredMovs: React.Dispatch<React.SetStateAction<Movimiento[]>> }) {
+ const [fecha, setFecha] = usePersistentState<string>(
+  'saldos-fecha',
+  toISODate(new Date())
+);
+
+const [almacenes, setAlmacenes] = usePersistentState<string[]>(
+  'saldos-almacenes',
+  []
+);
+
+const [marcas, setMarcas] = usePersistentState<string[]>(
+  'saldos-marcas',
+  []
+);
+
+const [search, setSearch] = usePersistentState<string>(
+  'saldos-search',
+  ''
+);
+
+const [show, setShow] = usePersistentState<string>(
+  'saldos-show',
+  'nonzero'
+);
+
+const clearFilters = () => {
+  setAlmacenes([]);
+  setMarcas([]);
+  setSearch('');
+  setShow('');
+  setFecha('');
+
+
+  };
 
   const rows = useMemo(() => {
     const d = fromISODate(fecha);
@@ -62,6 +99,9 @@ export function SaldosTab({ movs, uniques }: { movs: Movimiento[], uniques: Uniq
     res.sort((a, b) => a.codRef.localeCompare(b.codRef, 'es') || a.almacen.localeCompare(b.almacen, 'es'));
     return res;
   }, [movs, fecha, almacenes, marcas, search, show]);
+  useEffect(() => {
+  setFilteredMovs(rows);
+}, [rows]);
 
   const totalUnidades = rows.reduce((s, r) => s + r.saldo, 0);
   const skuCount = new Set(rows.map(r => r.codRef)).size;
@@ -86,6 +126,11 @@ export function SaldosTab({ movs, uniques }: { movs: Movimiento[], uniques: Uniq
       <div className="bg-white border border-[var(--color-line)] rounded-[14px] p-4 mb-4">
         <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
           <span className="text-xs uppercase tracking-[0.12em] text-[var(--color-ink-muted)] font-bold">Existencias a Fecha de Corte</span>
+           <button 
+              onClick={clearFilters} 
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-[13px] font-semibold border border-transparent hover:bg-[var(--color-red-pale)] text-[var(--color-ink-muted)] hover:text-[var(--color-red)] transition-colors">
+              <X className="w-4 h-4" /> Limpiar filtros
+            </button>
           <button 
             onClick={handleExport}
             disabled={rows.length === 0}

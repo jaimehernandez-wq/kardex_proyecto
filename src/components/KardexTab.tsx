@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Download, FileText } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import Select from 'react-select';
@@ -7,14 +7,47 @@ import autoTable from 'jspdf-autotable';
 import { Movimiento, Uniques } from '../types';
 import { fmtDate, fmtDateTime, fmtNum, toISODate, fromISODate } from '../lib/utils';
 import { Badge } from './ui';
+import {usePersistentState} from '../hooks/usePersistentState';
+import { X } from 'lucide-react';
 
-export function KardexTab({ movs, uniques }: { movs: Movimiento[], uniques: Uniques }) {
-  const [codRef, setCodRef] = useState<string>('');
-  const [almacen, setAlmacen] = useState<string>('__ALL__');
-  const [dateFrom, setDateFrom] = useState<string>('');
-  const [dateTo, setDateTo] = useState<string>('');
-  const [loteFilter, setLoteFilter] = useState('');
 
+export function KardexTab({ movs,
+  uniques,
+  setFilteredMovs}: {  movs: Movimiento[],
+  uniques: Uniques,
+  setFilteredMovs: React.Dispatch<React.SetStateAction<Movimiento[]>>}) {
+ 
+
+
+  //filtross
+  const [codRef, setCodRef] = usePersistentState<string>(
+  'kardex-codref',
+  ''
+);
+
+const [almacen, setAlmacen] = usePersistentState<string>(
+  'kardex-almacen',
+  '__ALL__'
+);
+
+const [dateFrom, setDateFrom] = usePersistentState<string>(
+  'kardex-date-from',
+  ''
+);
+
+const [dateTo, setDateTo] = usePersistentState<string>(
+  'kardex-date-to',
+  ''
+);
+
+const [loteFilter, setLoteFilter] = usePersistentState<string>(
+  'kardex-lote-filter',
+  ''
+);
+ const clearFilters = () => {
+    setDateFrom(''); setDateTo(''); setAlmacen('');
+    setCodRef(''); setLoteFilter(''); 
+  };
   const { visibles, prodInfo, saldoInicial, saldoFinal, totalEnt, totalSal } = useMemo(() => {
     if (!codRef) return { visibles: [], prodInfo: null, saldoInicial: 0, saldoFinal: 0, totalEnt: 0, totalSal: 0 };
     
@@ -26,6 +59,7 @@ export function KardexTab({ movs, uniques }: { movs: Movimiento[], uniques: Uniq
     const allProd = movs.filter(r => r.codRef === codRef).sort((a, b) => (a.fechaHora?.getTime() || 0) - (b.fechaHora?.getTime() || 0));
     
     if (!allProd.length) return { visibles: [], prodInfo: null, saldoInicial: 0, saldoFinal: 0, totalEnt: 0, totalSal: 0 };
+    
 
     const saldoPorAlmacen: Record<string, number> = {};
     let saldoConsol = 0;
@@ -87,6 +121,9 @@ export function KardexTab({ movs, uniques }: { movs: Movimiento[], uniques: Uniq
     return { visibles: vis, prodInfo: allProd[0], saldoInicial: sInit, saldoFinal: sFin, totalEnt: tEnt, totalSal: tSal };
 
   }, [movs, codRef, almacen, dateFrom, dateTo, loteFilter]);
+  useEffect(() => {
+  setFilteredMovs(visibles);
+}, [visibles]);
 
   const handleExportExcel = () => {
     if (!codRef || visibles.length === 0) return;
@@ -152,7 +189,7 @@ export function KardexTab({ movs, uniques }: { movs: Movimiento[], uniques: Uniq
       v.almacen,
       v.gtin || '-',
       v.marca || '-',
-      v.tipoOC || '-',
+     
       v.folioFactura || '-',
       `${v.lote || '-'}\n${v.serie || '-'}`,
       v.caducidad ? fmtDate(v.caducidad) : '-',
@@ -202,6 +239,11 @@ export function KardexTab({ movs, uniques }: { movs: Movimiento[], uniques: Uniq
         <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
           <span className="text-xs uppercase tracking-[0.12em] text-[var(--color-ink-muted)] font-bold">Selección de Kardex</span>
           <div className="flex gap-2">
+             <button 
+              onClick={clearFilters} 
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-[13px] font-semibold border border-transparent hover:bg-[var(--color-red-pale)] text-[var(--color-ink-muted)] hover:text-[var(--color-red)] transition-colors">
+              <X className="w-4 h-4" /> Limpiar filtros
+            </button>
             <button 
               onClick={handleExportPDF}
               disabled={!codRef || visibles.length === 0}
@@ -216,7 +258,9 @@ export function KardexTab({ movs, uniques }: { movs: Movimiento[], uniques: Uniq
             >
               <Download className="w-4 h-4" /> Exportar a Excel
             </button>
+            
           </div>
+          
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
           <div className="flex flex-col gap-1 lg:col-span-2">
@@ -329,7 +373,7 @@ export function KardexTab({ movs, uniques }: { movs: Movimiento[], uniques: Uniq
                           </td>
                           <td className="px-3 py-2 align-middle font-mono text-[11px]">{v.gtin || '—'}</td>
                           <td className="px-3 py-2 align-middle text-[12px] whitespace-nowrap max-w-[100px] truncate" title={v.marca}>{v.marca || '—'}</td>
-                          <td className="px-3 py-2 align-middle text-[12px] whitespace-nowrap">{v.tipoOC || '—'}</td>
+                          
                           <td className="px-3 py-2 align-middle font-mono text-[11px]">{v.folioFactura || '—'}</td>
                           <td className="px-3 py-2 align-middle font-mono text-[11px] whitespace-nowrap">
                             {v.lote || '—'}<br/>

@@ -3,6 +3,7 @@ import * as XLSX from 'xlsx';
 import { FileOutput, Trash2, GripVertical, CheckCircle2 } from 'lucide-react';
 import { cn, toISODate, fmtDateTime } from '../lib/utils';
 import { Movimiento } from '../types';
+import {usePersistentState} from '../hooks/usePersistentState';
 
 export function PorteoTab({ movs }: { movs: Movimiento[] }) {
   const [importedData, setImportedData] = useState<any[]>([]);

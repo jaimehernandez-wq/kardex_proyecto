@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Download, FileText } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Download, FileText, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import Select from 'react-select';
 import jsPDF from 'jspdf';
@@ -7,13 +7,43 @@ import autoTable from 'jspdf-autotable';
 import { Movimiento, Uniques } from '../types';
 import { fmtDate, fmtDateTime, fmtNum, toISODate, fromISODate } from '../lib/utils';
 import { Badge } from './ui';
+import {usePersistentState} from '../hooks/usePersistentState';
 
-export function GtinTab({ movs, uniques }: { movs: Movimiento[], uniques: Uniques }) {
-  const [gtinRef, setGtinRef] = useState<string>('');
-  const [almacen, setAlmacen] = useState<string>('__ALL__');
-  const [dateFrom, setDateFrom] = useState<string>('');
-  const [dateTo, setDateTo] = useState<string>('');
-  const [loteFilter, setLoteFilter] = useState('');
+
+export function GtinTab({ movs,
+  uniques,
+  setFilteredMovs}: {  movs: Movimiento[],
+  uniques: Uniques,
+  setFilteredMovs: React.Dispatch<React.SetStateAction<Movimiento[]>> }) {
+ const [gtinRef, setGtinRef] = usePersistentState<string>(
+  'gtin-ref',
+  ''
+);
+
+const [almacen, setAlmacen] = usePersistentState<string>(
+  'gtin-almacen',
+  '__ALL__'
+);
+
+const [dateFrom, setDateFrom] = usePersistentState<string>(
+  'gtin-date-from',
+  ''
+);
+
+const [dateTo, setDateTo] = usePersistentState<string>(
+  'gtin-date-to',
+  ''
+);
+
+const [loteFilter, setLoteFilter] = usePersistentState<string>(
+  'gtin-lote-filter',
+  ''
+);
+
+ const clearFilters = () => {
+    setDateFrom(''); setDateTo(''); setAlmacen('');
+    setGtinRef(''); setLoteFilter(''); 
+  };
 
   const { visibles, gtinInfo, saldoInicial, saldoFinal, totalEnt, totalSal } = useMemo(() => {
     if (!gtinRef) return { visibles: [], gtinInfo: null, saldoInicial: 0, saldoFinal: 0, totalEnt: 0, totalSal: 0 };
@@ -87,6 +117,9 @@ export function GtinTab({ movs, uniques }: { movs: Movimiento[], uniques: Unique
     return { visibles: vis, gtinInfo: allGtin[0], saldoInicial: sInit, saldoFinal: sFin, totalEnt: tEnt, totalSal: tSal };
 
   }, [movs, gtinRef, almacen, dateFrom, dateTo, loteFilter]);
+  useEffect(() => {
+  setFilteredMovs(visibles);
+}, [visibles]);
 
   const handleExportExcel = () => {
     if (!gtinRef || visibles.length === 0) return;
@@ -144,6 +177,7 @@ export function GtinTab({ movs, uniques }: { movs: Movimiento[], uniques: Unique
     doc.setFont('helvetica', 'bold');
     doc.text(`Saldo Final: ${fmtNum(saldoFinal)}`, 220, 53);
     doc.setFont('helvetica', 'normal');
+  
 
     // Table
     const tableData = visibles.map(v => [
@@ -152,7 +186,7 @@ export function GtinTab({ movs, uniques }: { movs: Movimiento[], uniques: Unique
       v.almacen,
       v.codRef || '-',
       v.marca || '-',
-      v.tipoOC || '-',
+      
       v.folioFactura || '-',
       `${v.lote || '-'}\n${v.serie || '-'}`,
       v.caducidad ? fmtDate(v.caducidad) : '-',
@@ -202,6 +236,11 @@ export function GtinTab({ movs, uniques }: { movs: Movimiento[], uniques: Unique
         <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
           <span className="text-xs uppercase tracking-[0.12em] text-[var(--color-ink-muted)] font-bold">Selección por GTIN</span>
           <div className="flex gap-2">
+             <button 
+                          onClick={clearFilters} 
+                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-[13px] font-semibold border border-transparent hover:bg-[var(--color-red-pale)] text-[var(--color-ink-muted)] hover:text-[var(--color-red)] transition-colors">
+                          <X className="w-4 h-4" /> Limpiar filtros
+                        </button>
             <button 
               onClick={handleExportPDF}
               disabled={!gtinRef || visibles.length === 0}
@@ -329,7 +368,7 @@ export function GtinTab({ movs, uniques }: { movs: Movimiento[], uniques: Unique
                           </td>
                           <td className="px-3 py-2 align-middle font-mono text-[11px]">{v.codRef || '—'}</td>
                           <td className="px-3 py-2 align-middle text-[12px] whitespace-nowrap max-w-[100px] truncate" title={v.marca}>{v.marca || '—'}</td>
-                          <td className="px-3 py-2 align-middle text-[12px] whitespace-nowrap">{v.tipoOC || '—'}</td>
+                    
                           <td className="px-3 py-2 align-middle font-mono text-[11px]">{v.folioFactura || '—'}</td>
                           <td className="px-3 py-2 align-middle font-mono text-[11px] whitespace-nowrap">
                             {v.lote || '—'}<br/>
