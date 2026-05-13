@@ -177,44 +177,82 @@ const balance = totalEntradas - totalSalidas;
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* HEADER */}
-      <header className="p-4 border-b flex justify-between bg-white">
+{/* HEADER */}
+<header className="border-b bg-white px-4 py-3">
 
-        <div className="flex gap-3 items-center">
-          <img src={logo} className="h-8" />
-          <div>
-            <div className="font-bold text-lg">Kardex Control Pro</div>
-            <div className="text-xs text-gray-400">TRAZABILIDAD · INVENTARIO</div>
-          </div>
+  <div className="
+    flex
+    flex-wrap
+    items-center
+    justify-between
+    gap-4
+  ">
+
+    {/* IZQUIERDA */}
+    <div className="flex items-center gap-3 min-w-0">
+
+      <img
+        src={logo}
+        className="
+          h-10
+          w-auto
+          object-contain
+          shrink-0
+        "
+      />
+
+      <div className="min-w-0">
+        <div className="font-bold text-lg leading-tight">
+          Kardex Control Pro
         </div>
 
-        <div className="flex items-center gap-4">
-
-        <div className="text-sm text-black-500">
-          {loading ? 'Cargando...' : `${fmtNum(movs.length)} movimientos cargados`}
+        <div className="text-xs text-gray-400">
+          TRAZABILIDAD · INVENTARIO
         </div>
+      </div>
 
-        <div className="text-xs text-black-400">
-          {user?.displayName || user?.email}
-        </div>
+    </div>
 
-        <button
+    {/* DERECHA */}
+    <div className="
+      flex
+      items-center
+      gap-3
+      flex-wrap
+      justify-end
+    ">
+
+      <div className="
+        text-xs
+        text-gray-500
+        max-w-[180px]
+        truncate
+      ">
+        {user?.displayName || user?.email}
+      </div>
+
+      <button
         onClick={logout}
         className="
-          px-4 py-2
+          px-4
+          py-2
           rounded-lg
           bg-red-500
           hover:bg-red-600
           text-white
           text-sm
-          transition  
+          transition
+          whitespace-nowrap
         "
       >
         Cerrar sesión
       </button>
-      </div>
 
-      </header>
+    </div>
+
+  </div>
+
+</header>
 
       <main className="p-6">
 
@@ -229,7 +267,15 @@ const balance = totalEntradas - totalSalidas;
         </div>
 
         {/* KPIs */}
-        <div className="grid grid-cols-3 md:grid-cols-6 gap-4 mb-6">
+          <div className="
+            grid
+            grid-cols-1
+            sm:grid-cols-2
+            lg:grid-cols-3
+            xl:grid-cols-6
+            gap-4
+            mb-6
+        ">
           <div className="p-4 bg-white rounded shadow">
             <div className="text-xs text-gray-400">MOVIMIENTOS</div>
             <div className="text-xl font-semibold">{fmtNum(movs.length)}</div>
@@ -280,7 +326,17 @@ const balance = totalEntradas - totalSalidas;
         </div>
 
         {/* TABS */}
-        <div className="flex gap-6 border-b mb-6 text-sm">
+        <div className="
+            flex
+            gap-6
+            border-b
+            mb-6
+            text-sm
+            overflow-x-auto
+            whitespace-nowrap
+            scrollbar-thin
+            pb-2
+          ">
           {[
             ['kardex', 'Kardex Detallado'],
             ['gtin', 'Trazabilidad por GTIN'],
@@ -292,10 +348,14 @@ const balance = totalEntradas - totalSalidas;
             <button
               key={key}
               onClick={() => setActiveTab(key as any)}
-              className={`pb-2 ${
+              className={
+                `pb-2 
+                shrink-0
+                transition
+                ${
                 activeTab === key
                   ? 'border-b-2 border-red-500 text-red-500'
-                  : 'text-gray-500'
+                  : 'text-gray-500 hover:text-black'
               }`}
             >
               {label}
